@@ -13,7 +13,22 @@ clean:
 	docker compose down -v
 
 test:
+	@echo "Starting backend services..."
 	docker compose up -d --build
+
+	@echo "Waiting for backend to be ready..."
+	@sleep 5
+
+	@echo "Running migrations..."
 	docker compose exec backend python manage.py migrate
-	docker compose exec frontend npx playwright test
-	docker compose down
+
+	@echo "Installing E2E dependencies..."
+	cd e2e && npm ci
+
+	@echo "Installing Playwright browsers..."
+	cd e2e && npx playwright install --with-deps
+
+	@echo "Running Playwright E2E tests..."
+	cd e2e && npm test
+
+	@echo "Tests completed. Leaving services running (use 'make stop' to stop them)"

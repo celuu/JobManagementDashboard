@@ -1,9 +1,12 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Job Creation Flow', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+  test.beforeEach(async ({ page, browserName }) => {
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+    if (browserName !== 'firefox') {
+      await page.waitForLoadState('networkidle', { timeout: 10_000 });
+    }
   });
 
   test('should create a new job and verify it appears in the list with PENDING status', async ({ page }) => {

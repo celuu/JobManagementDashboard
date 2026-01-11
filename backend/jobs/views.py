@@ -2,6 +2,7 @@ from django.db.models import OuterRef, Subquery
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from .pagination import JobPagination
 
 from .models import Job, JobStatus
 from .serializers import JobSerializer, JobCreateSerializer, JobStatusUpdateSerializer
@@ -14,11 +15,37 @@ class JobListCreateAPIView(APIView):
             .values("status_type")[:1]
         )
 
-        jobs = Job.objects.annotate(
-            current_status=Subquery(latest_status_subquery)
-        ).order_by("-created_at")
+        jobs = (
+            Job.objects.annotate(
+                current_status=Subquery(latest_status_subquery)
+            )
+            .order_by("-created_at")
+        )
+        status_filter = request.query_params.get("status")
+        if status_filter and status_filter != "ALL":
+            jobs = jobs.filter(current_status=status_filter)
 
-        return Response(JobSerializer(jobs, many=True).data)
+        ordering = request.query_params.get("ordering", "-created_at")
+        allowed = {
+            "created_at",
+            "-created_at",
+            "name",
+            "-name",
+            "current_status",
+            "-current_status",
+        }
+        if ordering not in allowed:
+            ordering = "-created_at"
+
+        jobs = jobs.order_by(ordering)
+
+
+        paginator = JobPagination()
+        page = paginator.paginate_queryset(jobs, request)
+
+        serializer = JobSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
 
     def post(self, request):
         serializer = JobCreateSerializer(data=request.data)

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Box,
   Flex,
@@ -11,8 +11,8 @@ import {
 } from "@chakra-ui/react";
 import { JobCard } from "./JobCard";
 import type { Job, JobStatusType } from "../api/api";
-
-type SortOption = "name-asc" | "name-desc" | "date-newest" | "date-oldest" | "status";
+import { Pagination } from "./Pagination";
+import type { SortOption } from "../App";
 
 interface JobListProps {
   jobs: Job[];
@@ -20,27 +20,24 @@ interface JobListProps {
   statusOptions: JobStatusType[];
   onStatusChange: (jobId: number, status: JobStatusType) => void;
   onDelete: (jobId: number) => void;
+  totalPages: number;
+  page: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  totalJobs: number;
+  filterStatus: JobStatusType | "ALL";
+  onFilterStatusChange: (value: JobStatusType | "ALL") => void;
+  sortBy: SortOption;
+  onSortChange: (value: SortOption) => void;
 }
 
+
 export function JobList({
-  jobs,
-  loading,
-  statusOptions,
-  onStatusChange,
-  onDelete,
-}: JobListProps) {
-  const [sortBy, setSortBy] = useState<SortOption>("date-newest");
-  const [filterStatus, setFilterStatus] = useState<JobStatusType | "ALL">("ALL");
+  jobs, loading, statusOptions, onStatusChange, onDelete, totalPages, totalJobs, page, pageSize, onPageChange, filterStatus, onFilterStatusChange, sortBy, onSortChange }: JobListProps) {
 
-  const filteredAndSortedJobs = useMemo(() => {
-    // First, filter by status
-    let filtered = jobs;
-    if (filterStatus !== "ALL") {
-      filtered = jobs.filter((job) => job.current_status === filterStatus);
-    }
+  const sortedJobs = useMemo(() => {
 
-    // Then, sort the filtered results
-    const jobsCopy = [...filtered];
+    const jobsCopy = [...jobs];
 
     switch (sortBy) {
       case "name-asc":
@@ -85,11 +82,11 @@ export function JobList({
         <Heading size="sm">Jobs</Heading>
         {!loading && jobs.length > 0 && (
           <Text fontSize="sm" color="gray.500" fontWeight="500">
-            ({filteredAndSortedJobs.length} of {jobs.length})
+            ({sortedJobs.length} of {totalJobs})
           </Text>
         )}
         <Spacer />
-        {!loading && jobs.length > 0 && (
+        {!loading && totalPages > 0 && (
           <HStack spacing={4} wrap="wrap">
             <HStack spacing={2}>
               <Text fontSize="sm" color="gray.600" fontWeight="500">
@@ -98,12 +95,17 @@ export function JobList({
               <Select
                 size="sm"
                 value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as JobStatusType | "ALL")}
+                onChange={(e) =>
+                  onFilterStatusChange(e.target.value as JobStatusType | "ALL")
+                }
                 width="auto"
                 minW="140px"
                 borderColor="gray.300"
                 _hover={{ borderColor: "gray.400" }}
-                _focus={{ borderColor: "blue.500", boxShadow: "0 0 0 1px #3182ce" }}
+                _focus={{
+                  borderColor: "blue.500",
+                  boxShadow: "0 0 0 1px #3182ce",
+                }}
               >
                 <option value="ALL">All Status</option>
                 <option value="PENDING">Pending</option>
@@ -120,12 +122,15 @@ export function JobList({
               <Select
                 size="sm"
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                onChange={(e) => onSortChange(e.target.value as SortOption)}
                 width="auto"
                 minW="160px"
                 borderColor="gray.300"
                 _hover={{ borderColor: "gray.400" }}
-                _focus={{ borderColor: "blue.500", boxShadow: "0 0 0 1px #3182ce" }}
+                _focus={{
+                  borderColor: "blue.500",
+                  boxShadow: "0 0 0 1px #3182ce",
+                }}
               >
                 <option value="date-newest">Newest First</option>
                 <option value="date-oldest">Oldest First</option>
@@ -145,32 +150,40 @@ export function JobList({
 
       {!loading && jobs.length === 0 ? (
         <Text color="gray.600">No jobs yet. Create one above.</Text>
-      ) : !loading && filteredAndSortedJobs.length === 0 ? (
+      ) : !loading && sortedJobs.length === 0 ? (
         <Text color="gray.600">
           No jobs match the current filter. Try selecting a different status.
         </Text>
       ) : (
-        <Grid
-          templateColumns={{
-            base: "1fr",
-            md: "repeat(2, 1fr)",
-            lg: "repeat(3, 1fr)",
-          }}
-          gap={{ base: 3, md: 4 }}
-          width="100%"
-          alignItems="stretch"
-          autoRows="1fr"
-        >
-          {filteredAndSortedJobs.map((job) => (
-            <JobCard
-              key={job.id}
-              job={job}
-              statusOptions={statusOptions}
-              onStatusChange={onStatusChange}
-              onDelete={onDelete}
-            />
-          ))}
-        </Grid>
+        <>
+          <Grid
+            templateColumns={{
+              base: "1fr",
+              md: "repeat(2, 1fr)",
+              lg: "repeat(3, 1fr)",
+            }}
+            gap={{ base: 3, md: 4 }}
+            width="100%"
+            alignItems="stretch"
+            autoRows="1fr"
+          >
+            {sortedJobs.map((job) => (
+              <JobCard
+                key={job.id}
+                job={job}
+                statusOptions={statusOptions}
+                onStatusChange={onStatusChange}
+                onDelete={onDelete}
+              />
+            ))}
+          </Grid>
+          <Pagination
+            totalPages={totalPages}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={onPageChange}
+          />
+        </>
       )}
     </Box>
   );

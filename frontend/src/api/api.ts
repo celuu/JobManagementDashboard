@@ -8,6 +8,13 @@ export type Job = {
   current_status: JobStatusType | null;
 };
 
+export type PaginatedJobResponse = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Job[];
+};
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -17,7 +24,6 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   });
 
   if (!res.ok) {
-    // Django debug returns HTML sometimes; keep message useful
     const text = await res.text();
     throw new Error(text || `Request failed with status ${res.status}`);
   }
@@ -26,7 +32,22 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return (await res.json()) as T;
 }
 
-export const getJobs = () => request<Job[]>("/api/jobs/");
+export const getJobs = (
+  page: number = 1,
+  page_size: number = 20,
+  status?: JobStatusType | "ALL",
+  ordering?: string
+) => {
+  const params = new URLSearchParams({
+    page: String(page),
+    page_size: String(page_size),
+  });
+
+  if (status && status !== "ALL") params.set("status", status);
+  if (ordering) params.set("ordering", ordering);
+
+  return request<PaginatedJobResponse>(`/api/jobs/?${params.toString()}`);
+};
 export const createJob = (name: string) =>
   request<Job>("/api/jobs/", { method: "POST", body: JSON.stringify({ name }) });
 
