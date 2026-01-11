@@ -9,6 +9,11 @@ import {
   Stack,
   Text,
   useDisclosure,
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon,
 } from "@chakra-ui/react";
 import { FiEdit2, FiCheck, FiX } from "react-icons/fi";
 import type { Job, JobStatusType } from "../api/api";
@@ -126,15 +131,10 @@ export const JobCard = memo(function JobCard({
                 />
               )}
             </HStack>
-            <Text
-              fontSize="sm"
-              color="gray.500"
-              mt={2}
-              wordBreak="break-word"
-            >
+            <Text fontSize="sm" color="gray.500" mt={2} wordBreak="break-word">
               Created at: {new Date(job.created_at).toLocaleString()}
             </Text>
-
+          
           </Box>
 
           <Stack spacing={2} width="100%">

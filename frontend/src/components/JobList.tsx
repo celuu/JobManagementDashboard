@@ -8,6 +8,7 @@ import {
   Select,
   Spacer,
   Text,
+  Skeleton,
 } from "@chakra-ui/react";
 import { JobCard } from "./JobCard";
 import type { Job, JobStatusType } from "../api/api";
@@ -95,6 +96,7 @@ export function JobList({
               <Select
                 size="sm"
                 value={filterStatus}
+                isDisabled={loading}
                 onChange={(e) =>
                   onFilterStatusChange(e.target.value as JobStatusType | "ALL")
                 }
@@ -121,6 +123,7 @@ export function JobList({
               </Text>
               <Select
                 size="sm"
+                isDisabled={loading}
                 value={sortBy}
                 onChange={(e) => onSortChange(e.target.value as SortOption)}
                 width="auto"
@@ -156,6 +159,24 @@ export function JobList({
         </Text>
       ) : (
         <>
+          {loading ? (
+            <Grid
+              templateColumns={{
+                base: "1fr",
+                md: "repeat(2, 1fr)",
+                lg: "repeat(3, 1fr)",
+              }}
+              gap={{ base: 3, md: 4 }}
+              width="100%"
+              alignItems="stretch"
+              autoRows="1fr"
+            >
+              {Array.from({ length: pageSize }).map((_, index) => (
+                <Skeleton key={index} height="220px" width="100%" />
+              ))}
+            </Grid>
+          ) : (
+            <>
           <Grid
             templateColumns={{
               base: "1fr",
@@ -183,8 +204,12 @@ export function JobList({
             pageSize={pageSize}
             onPageChange={onPageChange}
           />
+            </>
+          )}
         </>
       )}
+
+
     </Box>
   );
 }
