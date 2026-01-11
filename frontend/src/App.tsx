@@ -1,35 +1,101 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useCallback, useEffect, useState } from "react";
+import { Box, Stack } from "@chakra-ui/react";
+import {
+  createJob,
+  deleteJob,
+  getJobs,
+  type Job,
+  type JobStatusType,
+  updateJobStatus,
+} from "./api/api";
+import {
+  ErrorAlert,
+  JobForm,
+  JobList,
+  PageHeader,
+} from "./components";
 
-function App() {
-  const [count, setCount] = useState(0)
+const STATUS_OPTIONS: JobStatusType[] = [
+  "PENDING",
+  "RUNNING",
+  "COMPLETED",
+  "FAILED",
+];
+
+export default function App() {
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchJobs = useCallback(async () => {
+    setError(null);
+    try {
+      const data = await getJobs();
+      setJobs(data);
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to fetch jobs.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
+
+  const handleCreateJob = useCallback(async (name: string) => {
+    setError(null);
+    try {
+      await createJob(name);
+      await fetchJobs();
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to create job.");
+      throw e;
+    }
+  }, [fetchJobs]);
+
+  const handleStatusChange = useCallback(async (jobId: number, status: JobStatusType) => {
+    setError(null);
+    try {
+      await updateJobStatus(jobId, status);
+      await fetchJobs();
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to update status.");
+    }
+  }, [fetchJobs]);
+
+  const handleDelete = useCallback(async (jobId: number) => {
+    setError(null);
+    try {
+      await deleteJob(jobId);
+      await fetchJobs();
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to delete job.");
+    }
+  }, [fetchJobs]);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <Box minH="100vh" bg="gray.50" py={12} width="100%">
+      <Box width="100%" px={12}>
+        <Stack spacing={6} width="100%">
+          <PageHeader
+            title="Job Management Dashboard"
+            description="View, create, update, and delete jobs."
+          />
 
-export default App
+          <JobForm onSubmit={handleCreateJob} />
+
+          {error && <ErrorAlert message={error} />}
+
+          <JobList
+            jobs={jobs}
+            loading={loading}
+            statusOptions={STATUS_OPTIONS}
+            onStatusChange={handleStatusChange}
+            onDelete={handleDelete}
+          />
+        </Stack>
+      </Box>
+    </Box>
+  );
+}

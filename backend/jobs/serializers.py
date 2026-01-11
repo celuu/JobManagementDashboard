@@ -3,7 +3,6 @@ from .models import Job, JobStatus
 
 
 class JobSerializer(serializers.ModelSerializer):
-    # We'll annotate this field in the queryset as `current_status`
     current_status = serializers.CharField(read_only=True)
 
     class Meta:

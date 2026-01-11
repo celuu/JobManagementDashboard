@@ -6,7 +6,6 @@ from rest_framework.views import APIView
 from .models import Job, JobStatus
 from .serializers import JobSerializer, JobCreateSerializer, JobStatusUpdateSerializer
 
-
 class JobListCreateAPIView(APIView):
     def get(self, request):
         latest_status_subquery = (
@@ -26,7 +25,6 @@ class JobListCreateAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         job = serializer.save()
 
-        # Return job with current_status included
         latest_status_subquery = (
             JobStatus.objects.filter(job=OuterRef("pk"))
             .order_by("-timestamp")
@@ -41,7 +39,6 @@ class JobListCreateAPIView(APIView):
 
 class JobDetailAPIView(APIView):
     def patch(self, request, pk: int):
-        # Ensure job exists
         try:
             job = Job.objects.get(pk=pk)
         except Job.DoesNotExist:
@@ -52,7 +49,6 @@ class JobDetailAPIView(APIView):
 
         JobStatus.objects.create(job=job, status_type=serializer.validated_data["status_type"])
 
-        # Return updated job w/ latest status
         latest_status_subquery = (
             JobStatus.objects.filter(job=OuterRef("pk"))
             .order_by("-timestamp")
