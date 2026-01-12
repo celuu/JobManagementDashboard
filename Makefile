@@ -13,7 +13,7 @@ clean:
 	docker compose down -v
 
 test:
-	@echo "Starting backend services..."
+	@echo "Building and starting services with Docker..."
 	docker compose up -d --build
 
 	@echo "Waiting for backend to be ready..."
@@ -22,11 +22,19 @@ test:
 	@echo "Running migrations..."
 	docker compose exec backend python manage.py migrate
 
-	@echo "Installing E2E dependencies..."
-	cd e2e && npm ci
+	@echo "Checking frontend dependencies..."
+	@if [ ! -d "frontend/node_modules" ]; then \
+		echo "Installing frontend dependencies..."; \
+		cd frontend && npm ci; \
+	fi
 
-	@echo "Installing Playwright browsers..."
-	cd e2e && npx playwright install --with-deps
+	@echo "Checking E2E dependencies..."
+	@if [ ! -d "e2e/node_modules" ]; then \
+		echo "Installing E2E dependencies..."; \
+		cd e2e && npm ci; \
+		echo "Installing Playwright browsers..."; \
+		cd e2e && npx playwright install --with-deps; \
+	fi
 
 	@echo "Running Playwright E2E tests..."
 	cd e2e && npm test
