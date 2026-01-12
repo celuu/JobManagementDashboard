@@ -2,148 +2,53 @@
 
 A full-stack web application for managing computational jobs with real-time status tracking, built with Django (backend), React + Chakra UI (frontend), and PostgreSQL (database).
 
-## 📋 Prerequisites
+## 🚀 Quick Start
 
-Before running this project, ensure you have the following installed:
-
-- **Docker** and **Docker Compose** (for backend and database)
-- **Node.js** (v18 or higher) and **npm** (for frontend and E2E tests)
-
-## 🚀 Quick Start (First Time Setup)
-
-For first-time setup after cloning the repository:
-
-```bash
-make setup
-```
-
-This will:
-- Build Docker images for backend and database
-- Install frontend dependencies
-- Install E2E test dependencies and Playwright browsers
-- Start all services
-- Run database migrations
-
-### Access the Application
-
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:8000
-- **API Documentation**: http://localhost:8000/api/schema/swagger-ui/
-
-## 🛠️ Development Commands
-
-### Start Services
-
-```bash
-make up          # Start all services (after initial setup)
-```
-
-### Stop Services
-
-```bash
-make stop        # Stop all services
-make clean       # Stop services and remove volumes (fresh start)
-```
-
-### Run Tests
-
-```bash
-make test        # Run E2E tests with Playwright
-```
-
-The test command will:
-- Start all services if not running
-- Auto-install frontend and E2E dependencies if needed
-- Run the full E2E test suite
-- Leave services running for debugging
-
-### View All Commands
-
-```bash
-make          # Show all available commands
-```
-
-### Manual Setup (Alternative)
-
-If you prefer manual setup instead of using the Makefile:
-
-```bash
-# Build and start backend + database
+To run the backend: 
 docker compose up -d --build
-
-# Wait for backend to be ready, then run migrations
 docker compose exec backend python manage.py migrate
 
-# In a separate terminal, install and start frontend
+To run the frontend: 
 cd frontend
-npm install
+npm i
 npm run dev
 
-# In another terminal, install and run E2E tests
-cd e2e
-npm install
-npx playwright install --with-deps
-npm test
-```
+# Christine Notes and though-process
 
-## 🧪 Running Tests
+# Problem Approach
 
-The project includes comprehensive E2E tests using Playwright:
+I began by analyzing the problem requirements to clarify the expected functionality, data flow, and API behavior. I used AI as a scaffolding tool to help generate an initial project structure and outline, particularly for setting up Django and establishing baseline API patterns, as this was my first time working with the framework. I defined the required inputs, query parameters, and response shapes, and used AI guidance to accelerate initial setup and syntax familiarity.
 
-```bash
-make test
-```
+From the outset, I designed with performance in mind, ensuring queries were executed at the database level, avoiding unnecessary nesting or in-memory processing, and keeping query logic simple, predictable, and efficient.
 
-Tests include:
-- Job creation flow
-- Job status management
-- Job deletion with confirmation
-- Success/error handling
-- Toast notifications
+While reviewing the requirements, I identified several design and implementation considerations that required clarification or explicit assumptions:
 
-## 📁 Project Structure
+- State transition constraints: Whether job status changes were expected to follow a defined state machine (e.g., enforcing valid transitions such as pending → completed while preventing invalid transitions).
 
-```
-.
-├── backend/           # Django REST API
-│   ├── jobs/         # Job management app
-│   └── config/       # Django settings
-├── frontend/         # React + Chakra UI
-│   └── src/
-│       ├── components/
-│       └── api/
-├── e2e/              # Playwright E2E tests
-│   └── tests/
-├── docker-compose.yml
-└── Makefile          # Convenience commands
-```
+- Deletion strategy: Whether records should be hard-deleted from the database or soft-deleted to preserve historical data and auditability.
 
-## 🎯 Features
+- API response design: Determining the minimal response payloads required for each endpoint, avoiding the return of unnecessary fields to reduce payload size and improve performance.
 
-- ✅ Create and manage jobs
-- ✅ Real-time status tracking (PENDING, RUNNING, COMPLETED, FAILED)
-- ✅ Pagination and filtering
-- ✅ Delete with confirmation modal
-- ✅ Success/error toast notifications
-- ✅ Responsive UI with Chakra UI
-- ✅ Comprehensive E2E test coverage
+- Authorization boundaries: In the absence of an authentication layer, deletion and mutation endpoints are inherently permissive. To mitigate this, I implemented defensive validations at the API level to prevent invalid or unexpected state mutations, including guarding against malformed or unauthorized status values from concurrent or external requests.
 
-## 📝 API Endpoints
+Since these considerations were not explicitly defined in the instructions, I made reasonable assumptions and opted for a simplified implementation. However, these are the types of questions I would typically surface during team discussions to align on requirements and long-term maintainability.
 
-- `GET /api/jobs/` - List jobs (with pagination)
-- `POST /api/jobs/` - Create a new job
-- `GET /api/jobs/{id}/` - Get job details
-- `PATCH /api/jobs/{id}/` - Update job status
-- `DELETE /api/jobs/{id}/` - Delete a job
+After defining the required API endpoints, I reviewed and validated them using Postman, iterating on request/response behavior through manual testing. Once the backend APIs were stable, I used AI to assist with scaffolding the frontend structure. I defined TypeScript types, integrated the API layer, and selected Chakra UI to accelerate component development, leveraging its built-in accessibility features and familiarity to maintain development velocity. After establishing a solid baseline, I iteratively added additional features and refinements.
 
-## 🔧 Technology Stack
+Extra Features
+- Server Side Pagination
+- Server Side Sorting
+- Server Side Filtering
+- Confirmation Modal when deleting
 
-- **Backend**: Django 5.1, Django REST Framework, PostgreSQL
-- **Frontend**: React 18, TypeScript, Chakra UI, Vite
-- **Testing**: Playwright
-- **DevOps**: Docker, Docker Compose
+Once the core functionality was stable, I used AI to assist with scaffolding the Playwright test setup. Having prior experience with Playwright and its best practices, I ensured the test suite was structured with reusable helper utilities to reduce duplication and improve maintainability. I validated the tests through repeated execution to confirm they were stable, non-flaky, and asserting meaningful user and API behaviors rather than incidental implementation details.
 
----
+Given additional time, I would make the following improvements:
 
-# Christine Notes and Thought Process
+- Introduce a centralized frontend theming system to standardize typography, color palettes, and spacing, improving visual consistency and long-term maintainability.
 
+- Refine the user experience by improving layout clarity, interaction feedback, and overall usability, potentially incorporating design system guidelines to inform UI decisions.
+
+- Add a linter and enforce consistent code quality standards across the codebase, integrating it into the development workflow to catch errors early and maintain stylistic consistency.
+
+The project was completed in approximately 3–4 hours, with 1–2 hours dedicated to implementing core functionality and API endpoints, and an additional 1–2 hours allocated to performance considerations, test coverage, documentation, and incremental refinements.
