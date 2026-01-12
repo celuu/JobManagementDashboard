@@ -13,9 +13,7 @@ cd frontend
 npm i
 npm run dev
 
-# Christine Notes and though-process
-
-# Problem Approach
+# Problem Approach and though process
 
 I began by analyzing the problem requirements to clarify the expected functionality, data flow, and API behavior. I used AI as a scaffolding tool to help generate an initial project structure and outline, particularly for setting up Django and establishing baseline API patterns, as this was my first time working with the framework. I defined the required inputs, query parameters, and response shapes, and used AI guidance to accelerate initial setup and syntax familiarity.
 
