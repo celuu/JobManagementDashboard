@@ -9,11 +9,6 @@ import {
   Stack,
   Text,
   useDisclosure,
-  Accordion,
-  AccordionItem,
-  AccordionButton,
-  AccordionPanel,
-  AccordionIcon,
 } from "@chakra-ui/react";
 import { FiEdit2, FiCheck, FiX } from "react-icons/fi";
 import type { Job, JobStatusType } from "../api/api";

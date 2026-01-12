@@ -22,6 +22,8 @@ class JobCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         job = Job.objects.create(**validated_data)
+        job.current_status = JobStatus.StatusType.PENDING
+        job.save()
         JobStatus.objects.create(job=job, status_type=JobStatus.StatusType.PENDING)
         return job
 

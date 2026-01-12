@@ -1,4 +1,4 @@
-from django.db.models import OuterRef, Subquery
+from django.db.models import OuterRef, Subquery, Value, CharField
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -19,7 +19,6 @@ class JobListCreateAPIView(APIView):
             Job.objects.annotate(
                 current_status=Subquery(latest_status_subquery)
             )
-            .order_by("-created_at")
         )
         status_filter = request.query_params.get("status")
         if status_filter and status_filter != "ALL":
@@ -37,8 +36,7 @@ class JobListCreateAPIView(APIView):
         if ordering not in allowed:
             ordering = "-created_at"
 
-        jobs = jobs.order_by(ordering)
-
+        jobs = jobs.order_by(ordering).only("id", "name", "created_at", "updated_at").prefetch_related("statuses")
 
         paginator = JobPagination()
         page = paginator.paginate_queryset(jobs, request)
@@ -51,17 +49,8 @@ class JobListCreateAPIView(APIView):
         serializer = JobCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         job = serializer.save()
-
-        latest_status_subquery = (
-            JobStatus.objects.filter(job=OuterRef("pk"))
-            .order_by("-timestamp")
-            .values("status_type")[:1]
-        )
-        job_with_status = Job.objects.annotate(
-            current_status=Subquery(latest_status_subquery)
-        ).get(pk=job.pk)
-
-        return Response(JobSerializer(job_with_status).data, status=status.HTTP_201_CREATED)
+        
+        return Response(JobSerializer(job).data, status=status.HTTP_201_CREATED)
 
 
 class JobDetailAPIView(APIView):
@@ -74,18 +63,10 @@ class JobDetailAPIView(APIView):
         serializer = JobStatusUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        JobStatus.objects.create(job=job, status_type=serializer.validated_data["status_type"])
+        job_status = JobStatus.objects.create(job=job, status_type=serializer.validated_data["status_type"])
 
-        latest_status_subquery = (
-            JobStatus.objects.filter(job=OuterRef("pk"))
-            .order_by("-timestamp")
-            .values("status_type")[:1]
-        )
-        job_with_status = Job.objects.annotate(
-            current_status=Subquery(latest_status_subquery)
-        ).get(pk=job.pk)
-
-        return Response(JobSerializer(job_with_status).data, status=status.HTTP_200_OK)
+        job.current_status = serializer.validated_data["status_type"]
+        return Response(JobSerializer(job).data, status=status.HTTP_200_OK)
 
     def delete(self, request, pk: int):
         try:

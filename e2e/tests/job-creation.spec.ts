@@ -27,7 +27,7 @@ test.describe('Job Creation Flow', () => {
     const jobCards = page.locator('[data-testid^="job-row-"]');
     await expect(jobCards.first()).toBeVisible();
 
-    const jobCard = page.locator(`text=${jobName}`).locator('..').locator('..');
+    const jobCard = page.locator('[data-testid^="job-row-"]').filter({ hasText: jobName });
     await expect(jobCard).toBeVisible();
 
     const statusBadge = jobCard.locator('[data-testid^="job-status-"]');
